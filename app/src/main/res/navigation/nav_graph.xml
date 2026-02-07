@@ -3,18 +3,22 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/FirstFragment">
+    app:startDestination="@id/OverviewFragment">
 
     <fragment
-        android:id="@+id/FirstFragment"
-        android:name="com.example.blueprinttracker.FirstFragment"
-        android:label="@string/first_fragment_label"
-        tools:layout="@layout/fragment_first">
+        android:id="@+id/OverviewFragment"
+        android:name="com.example.blueprinttracker.OverviewFragment"
+        android:label="@string/overview_fragment_label"
+        tools:layout="@layout/fragment_overview">
 
         <action
-            android:id="@+id/action_FirstFragment_to_SecondFragment"
+            android:id="@+id/action_OverviewFragment_to_SecondFragment"
             app:destination="@id/SecondFragment" />
+        <action
+            android:id="@+id/action_OverviewFragment_to_BucketDetailsFragment"
+            app:destination="@id/BucketDetailsFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/SecondFragment"
         android:name="com.example.blueprinttracker.SecondFragment"
@@ -22,7 +26,17 @@
         tools:layout="@layout/fragment_second">
 
         <action
-            android:id="@+id/action_SecondFragment_to_FirstFragment"
-            app:destination="@id/FirstFragment" />
+            android:id="@+id/action_SecondFragment_to_OverviewFragment"
+            app:destination="@id/OverviewFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/BucketDetailsFragment"
+        android:name="com.example.blueprinttracker.BucketDetailsFragment"
+        android:label="Bucket Details"
+        tools:layout="@layout/fragment_bucket_details">
+        <argument
+            android:name="bucketId"
+            app:argType="long" />
     </fragment>
 </navigation>

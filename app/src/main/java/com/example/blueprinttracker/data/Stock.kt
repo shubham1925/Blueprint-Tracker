@@ -25,6 +25,7 @@ data class Stock(
     val symbol: String,            // Stock ticker symbol (e.g., "AAPL")
     val name: String,              // Company/fund name
     val currentValue: Double,      // Current value in portfolio
+    val targetPercentage: Double = 0.0, // Target allocation within the bucket (0.0 - 100.0)
     val shares: Double? = null,    // Optional: number of shares held
     val notes: String? = null,     // Optional user notes
     val createdAt: Long,

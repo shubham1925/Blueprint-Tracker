@@ -2,6 +2,7 @@ package com.example.blueprinttracker.data.repository
 
 import com.example.blueprinttracker.data.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlin.math.abs
@@ -15,6 +16,8 @@ class PortfolioRepository(
     // Bucket operations
     fun getAllBuckets(): Flow<List<Bucket>> = bucketDao.getAllBuckets()
     
+    suspend fun getBucketById(bucketId: Long): Bucket? = bucketDao.getBucketById(bucketId)
+
     suspend fun addBucket(bucket: Bucket): Result<Long> {
         return try {
             val currentTotal = bucketDao.getTotalTargetPercentage() ?: 0.0
@@ -119,6 +122,35 @@ class PortfolioRepository(
                     buckets = bucketAllocations
                 )
             }
+    }
+
+    fun getBucketDetailSummary(bucketId: Long): Flow<BucketDetailSummary?> {
+        val bucketFlow = bucketDao.getAllBuckets().map { it.find { b -> b.bucketId == bucketId } }
+        val stocksFlow = stockDao.getStocksByBucket(bucketId)
+
+        return combine(bucketFlow, stocksFlow) { bucket, stocks ->
+            if (bucket == null) return@combine null
+
+            val totalBucketValue = stocks.sumOf { it.currentValue }
+            val stockDetails = stocks.map { stock ->
+                val currentPercentage = if (totalBucketValue > 0) {
+                    (stock.currentValue / totalBucketValue) * 100.0
+                } else {
+                    0.0
+                }
+                StockDetail(
+                    stock = stock,
+                    currentPercentage = currentPercentage,
+                    isOverAllocated = currentPercentage > stock.targetPercentage
+                )
+            }
+
+            BucketDetailSummary(
+                bucket = bucket,
+                stocks = stockDetails,
+                totalBucketValue = totalBucketValue
+            )
+        }
     }
     
     // Snapshot operations

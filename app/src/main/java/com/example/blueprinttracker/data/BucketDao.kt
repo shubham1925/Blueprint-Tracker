@@ -22,4 +22,7 @@ interface BucketDao {
     
     @Query("SELECT SUM(targetPercentage) FROM buckets")
     suspend fun getTotalTargetPercentage(): Double?
+
+    @Query("SELECT COUNT(*) FROM buckets")
+    suspend fun getCount(): Int
 }
