@@ -83,7 +83,11 @@ class PortfolioRepository(
     
     suspend fun updateStock(stock: Stock): Result<Unit> {
         return try {
-            stockDao.updateStock(stock.copy(updatedAt = System.currentTimeMillis()))
+            if (stock.currentValue <= 0) {
+                stockDao.deleteStock(stock)
+            } else {
+                stockDao.updateStock(stock.copy(updatedAt = System.currentTimeMillis()))
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -108,6 +112,8 @@ class PortfolioRepository(
                 }
                 
                 val bucketAllocations = bucketsWithStocks.map { bws ->
+                    // Only count stocks with value > 0 for the bucket summary if needed,
+                    // but updateStock already deletes them, so bws.stocks should only have value > 0.
                     val bucketValue = bws.stocks.sumOf { it.currentValue }
                     val currentPercentage = if (totalPortfolioValue > 0) {
                         (bucketValue / totalPortfolioValue) * 100.0
@@ -139,8 +145,11 @@ class PortfolioRepository(
         return combine(bucketFlow, stocksFlow) { bucket, stocks ->
             if (bucket == null) return@combine null
 
-            val totalBucketValue = stocks.sumOf { it.currentValue }
-            val stockDetails = stocks.map { stock ->
+            // Filter out stocks with 0 value
+            val activeStocks = stocks.filter { it.currentValue > 0 }
+
+            val totalBucketValue = activeStocks.sumOf { it.currentValue }
+            val stockDetails = activeStocks.map { stock ->
                 val currentPercentage = if (totalBucketValue > 0) {
                     (stock.currentValue / totalBucketValue) * 100.0
                 } else {
