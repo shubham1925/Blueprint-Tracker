@@ -2,6 +2,7 @@ package com.example.blueprinttracker.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.blueprinttracker.data.Bucket
 import com.example.blueprinttracker.data.PortfolioSummary
 import com.example.blueprinttracker.data.repository.PortfolioRepository
 import kotlinx.coroutines.flow.*
@@ -48,6 +49,32 @@ class PortfolioViewModel(
                 },
                 onFailure = { e ->
                     _snackbarMessage.emit("Failed to create snapshot: ${e.message}")
+                }
+            )
+        }
+    }
+
+    fun updateAllBucketAllocations(buckets: List<Bucket>) {
+        viewModelScope.launch {
+            repository.updateBuckets(buckets).fold(
+                onSuccess = {
+                    _snackbarMessage.emit("Buckets updated successfully")
+                },
+                onFailure = { e ->
+                    _snackbarMessage.emit("Failed to update buckets: ${e.message}")
+                }
+            )
+        }
+    }
+
+    fun updateBucketAllocation(bucket: Bucket, newTarget: Double) {
+        viewModelScope.launch {
+            repository.updateBucket(bucket.copy(targetPercentage = newTarget)).fold(
+                onSuccess = {
+                    _snackbarMessage.emit("Bucket updated successfully")
+                },
+                onFailure = { e ->
+                    _snackbarMessage.emit("Failed to update bucket: ${e.message}")
                 }
             )
         }

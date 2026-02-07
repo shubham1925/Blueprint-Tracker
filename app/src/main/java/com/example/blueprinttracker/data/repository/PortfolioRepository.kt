@@ -34,14 +34,22 @@ class PortfolioRepository(
     
     suspend fun updateBucket(bucket: Bucket): Result<Unit> {
         return try {
-            val currentTotal = bucketDao.getTotalTargetPercentage() ?: 0.0
-            val oldBucket = bucketDao.getBucketById(bucket.bucketId)
-            val adjustedTotal = currentTotal - (oldBucket?.targetPercentage ?: 0.0) + bucket.targetPercentage
-            
-            if (adjustedTotal > 100.0) {
-                Result.failure(Exception("Total target percentage exceeds 100%"))
+            bucketDao.updateBucket(bucket.copy(updatedAt = System.currentTimeMillis()))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateBuckets(buckets: List<Bucket>): Result<Unit> {
+        return try {
+            val total = buckets.sumOf { it.targetPercentage }
+            if (abs(total - 100.0) > 0.001) {
+                Result.failure(Exception("Total target percentage must be 100%"))
             } else {
-                bucketDao.updateBucket(bucket.copy(updatedAt = System.currentTimeMillis()))
+                buckets.forEach { bucket ->
+                    bucketDao.updateBucket(bucket.copy(updatedAt = System.currentTimeMillis()))
+                }
                 Result.success(Unit)
             }
         } catch (e: Exception) {
