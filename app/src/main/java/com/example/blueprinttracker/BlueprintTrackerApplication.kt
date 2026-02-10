@@ -14,7 +14,8 @@ class BlueprintTrackerApplication : Application() {
             database.bucketDao(),
             database.stockDao(),
             database.bucketWithStocksDao(),
-            database.portfolioSnapshotDao()
+            database.portfolioSnapshotDao(),
+            database.stockTransactionDao()
         )
     }
 }

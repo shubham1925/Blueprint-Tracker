@@ -17,9 +17,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.blueprinttracker.data.StockDetail
 import com.example.blueprinttracker.databinding.DialogAddRemoveFundsBinding
 import com.example.blueprinttracker.databinding.DialogChangeTargetAllocationBinding
+import com.example.blueprinttracker.databinding.DialogTransactionHistoryBinding
 import com.example.blueprinttracker.databinding.DialogUpdateStockBinding
 import com.example.blueprinttracker.databinding.FragmentBucketDetailsBinding
 import com.example.blueprinttracker.ui.adapter.StockAdapter
+import com.example.blueprinttracker.ui.adapter.TransactionAdapter
 import com.example.blueprinttracker.ui.viewmodel.BucketDetailsUiState
 import com.example.blueprinttracker.ui.viewmodel.BucketDetailsViewModel
 import com.example.blueprinttracker.ui.viewmodel.BucketDetailsViewModelFactory
@@ -92,13 +94,14 @@ class BucketDetailsFragment : Fragment() {
     }
 
     private fun showStockOptionsDialog(stockDetail: StockDetail) {
-        val options = arrayOf("Add/Remove funds", "Change target allocation")
+        val options = arrayOf("Add/Remove funds", "Change target allocation", "Show History")
         AlertDialog.Builder(requireContext())
             .setTitle(stockDetail.stock.symbol)
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> showAddRemoveFundsDialog(stockDetail)
                     1 -> showChangeTargetAllocationDialog(stockDetail)
+                    2 -> showTransactionHistoryDialog(stockDetail)
                 }
             }
             .show()
@@ -134,6 +137,29 @@ class BucketDetailsFragment : Fragment() {
                 }
             }
             .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showTransactionHistoryDialog(stockDetail: StockDetail) {
+        val dialogBinding = DialogTransactionHistoryBinding.inflate(layoutInflater)
+        val transactionAdapter = TransactionAdapter()
+        dialogBinding.recyclerTransactions.apply {
+            adapter = transactionAdapter
+            layoutManager = LinearLayoutManager(requireContext())
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.getTransactions(stockDetail.stock.symbol).collect { transactions ->
+                    transactionAdapter.submitList(transactions)
+                }
+            }
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Transaction History: ${stockDetail.stock.symbol}")
+            .setView(dialogBinding.root)
+            .setPositiveButton("Close", null)
             .show()
     }
 

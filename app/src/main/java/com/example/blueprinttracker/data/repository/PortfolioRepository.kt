@@ -11,7 +11,8 @@ class PortfolioRepository(
     private val bucketDao: BucketDao,
     private val stockDao: StockDao,
     private val bucketWithStocksDao: BucketWithStocksDao,
-    private val snapshotDao: PortfolioSnapshotDao
+    private val snapshotDao: PortfolioSnapshotDao,
+    private val transactionDao: StockTransactionDao
 ) {
     // Bucket operations
     fun getAllBuckets(): Flow<List<Bucket>> = bucketDao.getAllBuckets()
@@ -75,6 +76,13 @@ class PortfolioRepository(
     suspend fun addStock(stock: Stock): Result<Long> {
         return try {
             val id = stockDao.insertStock(stock)
+            transactionDao.insertTransaction(StockTransaction(
+                stockId = id,
+                symbol = stock.symbol,
+                amount = stock.currentValue,
+                timestamp = System.currentTimeMillis(),
+                type = "BUY"
+            ))
             Result.success(id)
         } catch (e: Exception) {
             Result.failure(e)
@@ -93,6 +101,24 @@ class PortfolioRepository(
             Result.failure(e)
         }
     }
+
+    suspend fun recordTransaction(stockId: Long, symbol: String, amount: Double, type: String): Result<Unit> {
+        return try {
+            transactionDao.insertTransaction(StockTransaction(
+                stockId = stockId,
+                symbol = symbol,
+                amount = amount,
+                timestamp = System.currentTimeMillis(),
+                type = type
+            ))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    fun getTransactionsBySymbol(symbol: String): Flow<List<StockTransaction>> =
+        transactionDao.getTransactionsBySymbol(symbol)
     
     suspend fun deleteStock(stock: Stock): Result<Unit> {
         return try {
@@ -112,8 +138,6 @@ class PortfolioRepository(
                 }
                 
                 val bucketAllocations = bucketsWithStocks.map { bws ->
-                    // Only count stocks with value > 0 for the bucket summary if needed,
-                    // but updateStock already deletes them, so bws.stocks should only have value > 0.
                     val bucketValue = bws.stocks.sumOf { it.currentValue }
                     val currentPercentage = if (totalPortfolioValue > 0) {
                         (bucketValue / totalPortfolioValue) * 100.0
@@ -145,7 +169,6 @@ class PortfolioRepository(
         return combine(bucketFlow, stocksFlow) { bucket, stocks ->
             if (bucket == null) return@combine null
 
-            // Filter out stocks with 0 value
             val activeStocks = stocks.filter { it.currentValue > 0 }
 
             val totalBucketValue = activeStocks.sumOf { it.currentValue }

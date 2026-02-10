@@ -17,7 +17,8 @@ object ServiceLocator {
             bucketDao = db.bucketDao(),
             stockDao = db.stockDao(),
             bucketWithStocksDao = db.bucketWithStocksDao(),
-            snapshotDao = db.portfolioSnapshotDao()
+            snapshotDao = db.portfolioSnapshotDao(),
+            transactionDao = db.stockTransactionDao()
         )
     }
 }

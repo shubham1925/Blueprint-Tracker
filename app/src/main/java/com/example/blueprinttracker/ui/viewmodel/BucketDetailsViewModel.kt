@@ -5,7 +5,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.blueprinttracker.data.BucketDetailSummary
 import com.example.blueprinttracker.data.Stock
+import com.example.blueprinttracker.data.StockTransaction
 import com.example.blueprinttracker.data.repository.PortfolioRepository
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -50,6 +52,12 @@ class BucketDetailsViewModel(
                     existingStock.currentValue - delta
                 }
                 repository.updateStock(existingStock.copy(currentValue = newValue.coerceAtLeast(0.0)))
+                repository.recordTransaction(
+                    existingStock.stockId,
+                    existingStock.symbol,
+                    if (isBuy) delta else -delta,
+                    if (isBuy) "BUY" else "SELL"
+                )
             } else {
                 if (isBuy) {
                     val newStock = Stock(
@@ -73,6 +81,12 @@ class BucketDetailsViewModel(
             if (stock != null) {
                 val newValue = (stock.currentValue + amount).coerceAtLeast(0.0)
                 repository.updateStock(stock.copy(currentValue = newValue))
+                repository.recordTransaction(
+                    stock.stockId,
+                    stock.symbol,
+                    amount,
+                    if (amount >= 0) "BUY" else "SELL"
+                )
             }
         }
     }
@@ -85,6 +99,10 @@ class BucketDetailsViewModel(
                 repository.updateStock(stock.copy(targetPercentage = targetPercentage))
             }
         }
+    }
+
+    fun getTransactions(symbol: String): Flow<List<StockTransaction>> {
+        return repository.getTransactionsBySymbol(symbol)
     }
 }
 

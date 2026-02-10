@@ -13,9 +13,10 @@ import androidx.work.WorkManager
         Bucket::class,
         Stock::class,
         PortfolioSnapshot::class,
-        BucketSnapshot::class
+        BucketSnapshot::class,
+        StockTransaction::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -23,6 +24,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun stockDao(): StockDao
     abstract fun portfolioSnapshotDao(): PortfolioSnapshotDao
     abstract fun bucketWithStocksDao(): BucketWithStocksDao
+    abstract fun stockTransactionDao(): StockTransactionDao
 
     companion object {
         @Volatile
