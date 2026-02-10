@@ -2,7 +2,8 @@ package com.example.blueprinttracker.data
 
 data class PortfolioSummary(
     val totalValue: Double,
-    val buckets: List<BucketAllocation>
+    val buckets: List<BucketAllocation>,
+    val lastUpdated: Long = 0L
 )
 
 data class BucketAllocation(

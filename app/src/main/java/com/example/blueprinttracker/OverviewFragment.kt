@@ -24,6 +24,8 @@ import com.example.blueprinttracker.ui.viewmodel.PortfolioViewModel
 import com.example.blueprinttracker.ui.viewmodel.PortfolioViewModelFactory
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 /**
@@ -40,6 +42,7 @@ class OverviewFragment : Fragment() {
 
     private lateinit var bucketAdapter: BucketAdapter
     private val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US)
+    private val dateFormatter = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -89,6 +92,14 @@ class OverviewFragment : Fragment() {
                         is PortfolioUiState.Success -> {
                             binding.textTotalPortfolioValue.text = 
                                 currencyFormatter.format(state.summary.totalValue)
+                            
+                            if (state.summary.lastUpdated > 0) {
+                                binding.textLastUpdated.text = "Last Updated: ${dateFormatter.format(Date(state.summary.lastUpdated))}"
+                                binding.textLastUpdated.visibility = View.VISIBLE
+                            } else {
+                                binding.textLastUpdated.visibility = View.GONE
+                            }
+
                             bucketAdapter.submitList(state.summary.buckets)
                         }
                         is PortfolioUiState.Error -> {

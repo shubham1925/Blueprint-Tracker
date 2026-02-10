@@ -137,6 +137,7 @@ class PortfolioRepository(
                     bws.stocks.sumOf { it.currentValue }
                 }
                 
+                var latestUpdate = 0L
                 val bucketAllocations = bucketsWithStocks.map { bws ->
                     val bucketValue = bws.stocks.sumOf { it.currentValue }
                     val currentPercentage = if (totalPortfolioValue > 0) {
@@ -145,6 +146,11 @@ class PortfolioRepository(
                         0.0
                     }
                     
+                    if (bws.bucket.updatedAt > latestUpdate) latestUpdate = bws.bucket.updatedAt
+                    bws.stocks.forEach { 
+                        if (it.updatedAt > latestUpdate) latestUpdate = it.updatedAt
+                    }
+
                     BucketAllocation(
                         bucket = bws.bucket,
                         currentValue = bucketValue,
@@ -157,7 +163,8 @@ class PortfolioRepository(
                 
                 PortfolioSummary(
                     totalValue = totalPortfolioValue,
-                    buckets = bucketAllocations
+                    buckets = bucketAllocations,
+                    lastUpdated = latestUpdate
                 )
             }
     }
