@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.first
 
 class SeedDatabaseWorker(
     context: Context,
@@ -15,13 +16,20 @@ class SeedDatabaseWorker(
             val bucketDao = database.bucketDao()
             val stockDao = database.stockDao()
 
-            if (bucketDao.getCount() > 0) return@coroutineScope Result.success()
+            if (bucketDao.getCount() > 0) {
+                // Check if DGIF needs renaming in existing database
+                val dgifBucket = bucketDao.getAllBuckets().first().find { it.name == "DGIF" }
+                if (dgifBucket != null) {
+                    bucketDao.updateBucket(dgifBucket.copy(name = "Dividend Growth", updatedAt = System.currentTimeMillis()))
+                }
+                return@coroutineScope Result.success()
+            }
 
             val now = System.currentTimeMillis()
             val buckets = listOf(
                 Bucket(bucketId = 1, name = "ETF", targetPercentage = 30.0, color = "#4285F4", displayOrder = 1, createdAt = now, updatedAt = now),
-                Bucket(bucketId = 2, name = "DGIF", targetPercentage = 30.0, color = "#34A853", displayOrder = 2, createdAt = now, updatedAt = now),
-                Bucket(bucketId = 3, name = "Growth", targetPercentage = 30.0, color = "#FBBC05", displayOrder = 3, createdAt = now, updatedAt = now),
+                Bucket(bucketId = 2, name = "Dividend Growth", targetPercentage = 30.0, color = "#34A853", displayOrder = 2, createdAt = now, updatedAt = now),
+                Bucket(bucketId = 3, name = "Growth", targetPercentage = 30.0, color = "#FBBC05", displayOrder = 2, createdAt = now, updatedAt = now),
                 Bucket(bucketId = 4, name = "Spec", targetPercentage = 10.0, color = "#EA4335", displayOrder = 4, createdAt = now, updatedAt = now)
             )
             buckets.forEach { bucketDao.insertBucket(it) }

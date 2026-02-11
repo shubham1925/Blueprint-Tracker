@@ -40,14 +40,18 @@ abstract class AppDatabase : RoomDatabase() {
                 .addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         super.onCreate(db)
-                        val request = OneTimeWorkRequestBuilder<SeedDatabaseWorker>().build()
-                        WorkManager.getInstance(context).enqueue(request)
+                        enqueueSeedWorker(context)
                     }
 
                     override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
                         super.onDestructiveMigration(db)
-                        val request = OneTimeWorkRequestBuilder<SeedDatabaseWorker>().build()
-                        WorkManager.getInstance(context).enqueue(request)
+                        enqueueSeedWorker(context)
+                    }
+
+                    override fun onOpen(db: SupportSQLiteDatabase) {
+                        super.onOpen(db)
+                        // Trigger worker on open to ensure any data migrations (like renaming DGIF) are applied
+                        enqueueSeedWorker(context)
                     }
                 })
                 .fallbackToDestructiveMigration()
@@ -55,6 +59,11 @@ abstract class AppDatabase : RoomDatabase() {
                 INSTANCE = instance
                 instance
             }
+        }
+
+        private fun enqueueSeedWorker(context: Context) {
+            val request = OneTimeWorkRequestBuilder<SeedDatabaseWorker>().build()
+            WorkManager.getInstance(context).enqueue(request)
         }
     }
 }
