@@ -1,6 +1,11 @@
 package com.example.blueprinttracker
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -94,7 +99,7 @@ class BucketDetailsFragment : Fragment() {
     }
 
     private fun showStockOptionsDialog(stockDetail: StockDetail) {
-        val options = arrayOf("Add/Remove funds", "Change target allocation", "Show History")
+        val options = arrayOf("Add/Remove funds", "Change target allocation", "Show History", "Ask Gemini")
         AlertDialog.Builder(requireContext())
             .setTitle(stockDetail.stock.symbol)
             .setItems(options) { _, which ->
@@ -102,9 +107,42 @@ class BucketDetailsFragment : Fragment() {
                     0 -> showAddRemoveFundsDialog(stockDetail)
                     1 -> showChangeTargetAllocationDialog(stockDetail)
                     2 -> showTransactionHistoryDialog(stockDetail)
+                    3 -> askGemini(stockDetail.stock.symbol)
                 }
             }
             .show()
+    }
+
+    private fun askGemini(symbol: String) {
+//        val query = "Tell me more about the stock $symbol"
+//        val url = "https://gemini.google.com/app?q=" + Uri.encode(query)
+        
+//        try {
+//            // Intent.ACTION_VIEW is the most basic and reliable way.
+//            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+//            // We launch from the activity context to ensure it has the correct flags and lifecycle.
+//            requireActivity().startActivity(intent)
+//            Log.d("GeminiFeature", "Direct ACTION_VIEW launched for $url")
+//        } catch (e: Exception) {
+//            Log.e("GeminiFeature", "Failed to launch ACTION_VIEW", e)
+//            Toast.makeText(requireContext(), "Could not open browser", Toast.LENGTH_SHORT).show()
+//        }
+        val query = "Launch a gemini overview of the stock symbol $symbol"
+
+        val geminiPackage = "com.google.android.apps.bard"
+        val pm = requireContext().packageManager
+
+        val intent = pm.getLaunchIntentForPackage(geminiPackage)
+
+        if (intent != null) {
+            // Gemini is installed — open it, user types manually
+            requireContext().startActivity(intent)
+        } else {
+            // Fallback: open Google Search with the query (this DOES support ?q=)
+            val url = "https://www.google.com/search?q=" + Uri.encode(query)
+            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            requireContext().startActivity(browserIntent)
+        }
     }
 
     private fun showAddRemoveFundsDialog(stockDetail: StockDetail) {
